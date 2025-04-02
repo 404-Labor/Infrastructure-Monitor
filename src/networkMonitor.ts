@@ -11,7 +11,7 @@ export function setupNetworkMonitoring(): void {
         const request = new Request(...args);
 
         // Ignoriere Anfragen vom Reporter selbst
-        if (request.headers.has(REPORT_HEADER) || request.url === getConfig()?.reportUrl) {
+        if (request.headers.has(REPORT_HEADER) || request.url === getConfig()?.endpoint) {
             return originalFetch.apply(this, args);
         }
 
@@ -29,8 +29,8 @@ export function setupNetworkMonitoring(): void {
                         status: response.status,
                         statusText: response.statusText,
                         method: request.method,
-                        durationMs: duration,
-                        // Vorsicht mit response/request Body -> Datenschutz/Größe
+                        durationMs: Math.round(duration),
+                        timestamp: new Date().toISOString()
                     };
                     sendReport(errorData);
                 }
@@ -45,8 +45,9 @@ export function setupNetworkMonitoring(): void {
                     level: 'error',
                     url: request.url, // Oder args[0] wenn es ein String war
                     method: request.method,
-                    durationMs: duration,
+                    durationMs: Math.round(duration),
                     error: error.message || String(error),
+                    timestamp: new Date().toISOString()
                 };
                 sendReport(errorData);
                 throw error; // Fehler weiterwerfen, damit die Anwendung ihn auch bemerkt

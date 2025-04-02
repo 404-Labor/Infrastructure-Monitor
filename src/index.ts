@@ -1,29 +1,57 @@
 // src/index.ts (Beispiel mit TypeScript)
 
-import { setConfig } from './config'; // Modul zum Speichern der Konfig
+import { getConfig, setConfig } from './config';
+
 import { setupConsoleMonitoring } from './consoleMonitor';
 import { setupNetworkMonitoring } from './networkMonitor';
 
 export interface MonitoringConfig {
-    reportUrl: string;
-    // Weitere Optionen: Batch-Intervall, Filter, etc.
+    endpoint: string;
+    applicationId: string;
+    samplingRate?: number;
+    maxBatchSize?: number;
+    flushInterval?: number;
 }
 
-let isInitialized = false;
+export class InfrastructureMonitor {
+    private isInitialized = false;
+    private config: MonitoringConfig;
 
-export function init(config: MonitoringConfig): void {
-    if (isInitialized) {
-        console.warn('Monitoring wurde bereits initialisiert.');
-        return;
-    }
-    if (!config || !config.reportUrl) {
-        console.error('Konfiguration mit reportUrl ist erforderlich.');
-        return;
+    constructor(config: MonitoringConfig) {
+        this.config = {
+            samplingRate: 1.0,
+            maxBatchSize: 100,
+            flushInterval: 5000,
+            ...config
+        };
     }
 
-    setConfig(config); // Speichere die Konfiguration zentral
-    setupNetworkMonitoring();
-    setupConsoleMonitoring();
-    isInitialized = true;
-    console.log('Netzwerk- und Konsolen-Überwachung gestartet.');
+    public start(): void {
+        if (this.isInitialized) {
+            console.warn('Monitoring wurde bereits initialisiert.');
+            return;
+        }
+
+        if (!this.config.endpoint || !this.config.applicationId) {
+            console.error('endpoint und applicationId sind erforderlich.');
+            return;
+        }
+
+        setConfig(this.config);
+        setupNetworkMonitoring();
+        setupConsoleMonitoring();
+        this.isInitialized = true;
+        console.log('Infrastructure Monitor gestartet.');
+    }
+
+    public stop(): void {
+        if (!this.isInitialized) {
+            console.warn('Monitoring wurde noch nicht initialisiert.');
+            return;
+        }
+
+        // Hier können wir später die Überwachung stoppen
+        this.isInitialized = false;
+        console.log('Infrastructure Monitor gestoppt.');
+    }
 }

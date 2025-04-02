@@ -34,6 +34,7 @@ export function setupConsoleMonitoring(): void {
                 type: 'console',
                 level: methodName,
                 message: formatArgs(args),
+                timestamp: new Date().toISOString()
             };
             sendReport(logData);
         };
