@@ -1,7 +1,6 @@
 // src/index.ts (Beispiel mit TypeScript)
 
-import { getConfig, setConfig } from './config';
-
+import { setConfig } from './config';
 import { setupConsoleMonitoring } from './consoleMonitor';
 import { setupNetworkMonitoring } from './networkMonitor';
 
@@ -15,7 +14,7 @@ export interface MonitoringConfig {
 
 export class InfrastructureMonitor {
     private isInitialized = false;
-    private config: MonitoringConfig;
+    private readonly config: MonitoringConfig;
 
     constructor(config: MonitoringConfig) {
         this.config = {
