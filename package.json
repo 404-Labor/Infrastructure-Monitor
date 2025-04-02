@@ -1,0 +1,44 @@
+{
+  "name": "infrastructure-monitor",
+  "version": "0.0.2",
+  "description": "Infrastructure-Monitor is a lightweight runtime monitoring library for web applications. It tracks client-side console output, failed network requests, and key performance metrics, then sends this data to a centralized monitoring endpoint. Ideal for detecting issues in production environments, analyzing user-side errors, and improving overall application reliability.",
+  "keywords": [
+    "monitoring",
+    "infrastructure",
+    "performance",
+    "error-tracking",
+    "web-monitoring",
+    "client-side",
+    "analytics",
+    "debugging",
+    "runtime-monitoring",
+    "web-application"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/404-Labor/Infrastructure-Monitor"
+  },
+  "license": "BSL",
+  "author": "Steffen Bahrmann",
+  "type": "module",
+  "main": "dist/index.js",
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "prepublishOnly": "npm run build",
+    "build": "rollup -c",
+    "publish": "npm publish"
+  },
+  "devDependencies": {
+    "@rollup/plugin-commonjs": "^28.0.3",
+    "@rollup/plugin-node-resolve": "^16.0.1",
+    "@rollup/plugin-terser": "^0.4.4",
+    "@rollup/plugin-typescript": "^12.1.2",
+    "@types/node": "^22.13.17",
+    "rollup": "^4.39.0",
+    "tslib": "^2.8.1",
+    "typescript": "^5.8.2"
+  }
+}

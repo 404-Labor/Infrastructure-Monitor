@@ -1,0 +1,47 @@
+// tsconfig.json
+{
+  "compilerOptions": {
+    /* Grundlegende Optionen */
+    "target": "ES2017", // Ziel-JavaScript-Version (gut für Browser-Kompatibilität)
+    "module": "ESNext", // Modulsystem für den Output (Rollup verarbeitet dies weiter)
+    "lib": ["ES2017", "DOM", "DOM.Iterable"], // Verfügbare Bibliotheken (DOM ist wichtig für Browser-APIs)
+    "allowJs": true, // Erlaube auch JavaScript-Dateien im Projekt
+    "declaration": true, // Generiere .d.ts Typdeklarationsdateien
+    "declarationDir": "./dist/types", // Wo die .d.ts Dateien gespeichert werden sollen
+    "outDir": "./dist", // Hauptausgabeverzeichnis für JS-Dateien (Rollup überschreibt dies oft)
+    "rootDir": "./src", // Stammverzeichnis der Quelldateien
+    "sourceMap": true, // Generiere Source Maps für Debugging
+
+    /* Strikte Typüberprüfung */
+    "strict": true, // Aktiviere alle strikten Typüberprüfungsoptionen
+    "noImplicitAny": true, // Fehler bei implizitem 'any'-Typ
+    "strictNullChecks": true, // Strikte Handhabung von null und undefined
+    "strictFunctionTypes": true, // Strikte Überprüfung von Funktionsparametern
+    "strictPropertyInitialization": true, // Stelle sicher, dass Klassen-Eigenschaften im Konstruktor initialisiert werden
+    "noImplicitThis": true, // Fehler bei 'this' mit implizitem 'any'-Typ
+    "alwaysStrict": true, // Parse im Strict Mode und füge "use strict" hinzu
+
+    /* Modulauflösung */
+    "moduleResolution": "node", // Wie Module aufgelöst werden (wie bei Node.js)
+    "esModuleInterop": true, // Ermöglicht bessere Interoperabilität zwischen CommonJS und ES Modulen
+    "allowSyntheticDefaultImports": true, // Erlaube default-Importe von Modulen ohne default-Export (relevant mit esModuleInterop)
+    "resolveJsonModule": true, // Erlaube Import von .json Dateien
+
+    /* Experimentelle Optionen */
+    // "experimentalDecorators": true,
+    // "emitDecoratorMetadata": true,
+
+    /* Weitere Optionen */
+    "skipLibCheck": true, // Überspringe die Typüberprüfung von Deklarationsdateien (beschleunigt den Build)
+    "forceConsistentCasingInFileNames": true, // Stelle sicher, dass Dateinamen konsistent geschrieben werden
+    "newLine": "lf" // Erzwinge LF als Zeilenumbruch
+  },
+  "include": [
+    "src/**/*" // Welche Dateien sollen kompiliert werden
+  ],
+  "exclude": [
+    "node_modules", // Standardmäßig ausgeschlossen
+    "dist", // Schließe das Ausgabe-Verzeichnis aus
+    "**/*.test.ts" // Schließe Testdateien aus (optional)
+  ]
+}
