@@ -52,6 +52,46 @@ monitor.stop();
 | maxBatchSize  | number | 100      | Maximale Anzahl von Ereignissen pro Batch       |
 | flushInterval | number | 5000     | Intervall in Millisekunden zum Senden der Daten |
 
+## Test-Server
+
+Für Entwicklungs- und Testzwecke enthält dieses Paket einen einfachen Express-Server, der die Monitoring-Daten empfängt und lokal speichert.
+
+### Server starten
+
+```bash
+# Entwicklungsmodus mit automatischem Neuladen
+npm run dev:server
+
+# Oder: Build und Start im Produktionsmodus
+npm run build:server
+npm run start:server
+```
+
+Der Server läuft standardmäßig auf Port 3000 und bietet folgende Endpunkte:
+
+- `POST http://localhost:3000/api/monitoring` - Empfängt Monitoring-Daten
+- `GET http://localhost:3000/api/status` - Server-Status-Check
+
+### Gespeicherte Daten
+
+Die empfangenen Daten werden im `data`-Verzeichnis als JSON-Dateien gespeichert. Der Dateiname enthält die Application-ID und den Zeitstempel.
+
+Beispiel einer gespeicherten Datei:
+
+```json
+{
+  "timestamp": "2024-03-02T15:30:00.000Z",
+  "events": [
+    {
+      "type": "console",
+      "level": "error",
+      "message": "API-Aufruf fehlgeschlagen",
+      "timestamp": "2024-03-02T15:29:59.000Z"
+    }
+  ]
+}
+```
+
 ## Datenschutz
 
 Infrastructure Monitor sammelt nur technische Daten, die für die Überwachung und Fehlerbehebung notwendig sind. Es werden keine personenbezogenen Daten oder sensible Informationen gesammelt.
