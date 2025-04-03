@@ -12,11 +12,34 @@ interface ReportData {
 }
 
 class ReportQueue {
-    private queue: ReportData[] = [];
+    private readonly queue: ReportData[] = [];
     private timer: number | null = null;
+    private intervalTimer: number | null = null;
 
     constructor() {
         this.processQueue = this.processQueue.bind(this);
+        this.startInterval = this.startInterval.bind(this);
+    }
+
+    public startInterval(): void {
+        const config = getConfig();
+        if (!config) return;
+
+        if (this.intervalTimer) {
+            clearInterval(this.intervalTimer);
+        }
+
+        this.intervalTimer = window.setInterval(
+            this.processQueue,
+            config.flushInterval || 5000
+        );
+    }
+
+    public stopInterval(): void {
+        if (this.intervalTimer) {
+            clearInterval(this.intervalTimer);
+            this.intervalTimer = null;
+        }
     }
 
     public add(data: ReportData): void {
@@ -33,12 +56,6 @@ class ReportQueue {
         // Batch-Größe prüfen
         if (this.queue.length >= (config.maxBatchSize || 100)) {
             this.processQueue();
-        } else if (!this.timer) {
-            // Timer für das nächste Batch starten
-            this.timer = window.setTimeout(
-                this.processQueue,
-                config.flushInterval || 5000
-            );
         }
     }
 
@@ -79,6 +96,7 @@ class ReportQueue {
 
 const reportQueue = new ReportQueue();
 
+export { reportQueue };
 export function sendReport(data: ReportData): void {
     reportQueue.add(data);
 }

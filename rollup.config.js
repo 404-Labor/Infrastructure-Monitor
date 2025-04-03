@@ -28,7 +28,13 @@ export default [
       }
     ],
     plugins: [
-      typescript({ tsconfig: './tsconfig.json', sourceMap: true, inlineSources: true }),
+      typescript({
+        tsconfig: './tsconfig.json',
+        sourceMap: true,
+        inlineSources: true,
+        declaration: true,
+        declarationDir: 'dist/types'
+      }),
       resolve({ browser: true }),
       commonjs(),
     ],

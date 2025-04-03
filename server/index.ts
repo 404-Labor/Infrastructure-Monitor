@@ -5,7 +5,7 @@ import express from 'express';
 import { join } from 'path';
 
 const app = express();
-const port = process.env.PORT || 3000;
+const port = process.env.PORT || 4040;
 
 // Stelle sicher, dass der data Ordner existiert
 const dataDir = join(process.cwd(), 'data');

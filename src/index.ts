@@ -1,5 +1,6 @@
 // src/index.ts (Beispiel mit TypeScript)
 
+import { reportQueue } from './reporter';
 import { setConfig } from './config';
 import { setupConsoleMonitoring } from './consoleMonitor';
 import { setupNetworkMonitoring } from './networkMonitor';
@@ -39,6 +40,7 @@ export class InfrastructureMonitor {
         setConfig(this.config);
         setupNetworkMonitoring();
         setupConsoleMonitoring();
+        reportQueue.startInterval();
         this.isInitialized = true;
         console.log('Infrastructure Monitor gestartet.');
     }
@@ -49,7 +51,7 @@ export class InfrastructureMonitor {
             return;
         }
 
-        // Hier können wir später die Überwachung stoppen
+        reportQueue.stopInterval();
         this.isInitialized = false;
         console.log('Infrastructure Monitor gestoppt.');
     }

@@ -1,6 +1,6 @@
 {
   "name": "infrastructure-monitor",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Infrastructure-Monitor is a lightweight runtime monitoring library for web applications. It tracks client-side console output, failed network requests, and key performance metrics, then sends this data to a centralized monitoring endpoint. Ideal for detecting issues in production environments, analyzing user-side errors, and improving overall application reliability.",
   "keywords": [
     "monitoring",
@@ -22,7 +22,7 @@
   "author": "Steffen Bahrmann",
   "type": "module",
   "main": "dist/index.js",
-  "types": "dist/index.d.ts",
+  "types": "dist/types/index.d.ts",
   "files": [
     "dist"
   ],
