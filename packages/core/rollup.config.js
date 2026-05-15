@@ -47,8 +47,16 @@ export default [
       resolve({ browser: true }),
       commonjs(),
       typescript({
-        tsconfig: './tsconfig.json',
-        declaration: false
+        tsconfig: false,
+        compilerOptions: {
+          target: 'ES2020',
+          module: 'ESNext',
+          moduleResolution: 'Bundler',
+          lib: ['ES2020', 'DOM', 'DOM.Iterable'],
+          strict: true,
+          esModuleInterop: true,
+          skipLibCheck: true
+        }
       })
     ]
   }

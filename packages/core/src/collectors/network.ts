@@ -65,9 +65,10 @@ export class NetworkCollector implements Collector {
     const originalOpen = this.originalOpen;
 
     XMLHttpRequest.prototype.open = function patchedOpen(
+      this: XMLHttpRequest,
       method: string,
       url: string | URL,
-      async = true,
+      async: boolean = true,
       username?: string | null,
       password?: string | null
     ): void {
