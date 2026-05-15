@@ -14,7 +14,7 @@ export async function collectContext(fingerprintRotation: number): Promise<Watch
     browserVersion: parsedUserAgent.browserVersion,
     os: parsedUserAgent.os,
     osVersion: parsedUserAgent.osVersion,
-    deviceType: detectDeviceType(navigator.userAgent),
+    deviceType: detectDeviceType(navigator.userAgent, navigator.maxTouchPoints),
     viewport: {
       width: window.innerWidth,
       height: window.innerHeight
@@ -30,9 +30,13 @@ export async function collectContext(fingerprintRotation: number): Promise<Watch
   };
 }
 
-function parseUserAgent(userAgent: string): Pick<WatchDogContext, 'browser' | 'browserVersion' | 'os' | 'osVersion'> {
+export function parseUserAgent(
+  userAgent: string
+): Pick<WatchDogContext, 'browser' | 'browserVersion' | 'os' | 'osVersion'> {
   const browserMatchers: Array<[string, RegExp]> = [
     ['Edge', /Edg\/([\d.]+)/],
+    ['Opera', /(?:OPR|Opera)\/([\d.]+)/],
+    ['Samsung Internet', /SamsungBrowser\/([\d.]+)/],
     ['Chrome', /Chrome\/([\d.]+)/],
     ['Firefox', /Firefox\/([\d.]+)/],
     ['Safari', /Version\/([\d.]+).*Safari/]
@@ -68,12 +72,20 @@ function matchUserAgent(userAgent: string, matchers: Array<[string, RegExp]>): [
   return ['Unknown', ''];
 }
 
-function detectDeviceType(userAgent: string): WatchDogContext['deviceType'] {
+export function detectDeviceType(userAgent: string, maxTouchPoints = 0): WatchDogContext['deviceType'] {
   if (/tablet|ipad/i.test(userAgent)) {
     return 'tablet';
   }
 
-  if (/mobile|android|iphone|ipod/i.test(userAgent)) {
+  if (/mobile|iphone|ipod|android.*mobile/i.test(userAgent)) {
+    return 'mobile';
+  }
+
+  if (/android/i.test(userAgent) && maxTouchPoints > 0) {
+    return 'tablet';
+  }
+
+  if (maxTouchPoints > 0 && typeof window !== 'undefined' && window.innerWidth <= 768) {
     return 'mobile';
   }
 

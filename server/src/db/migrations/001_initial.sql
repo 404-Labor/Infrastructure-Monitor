@@ -1,4 +1,8 @@
-export const schema = `
+CREATE TABLE IF NOT EXISTS schema_migrations (
+  version INTEGER PRIMARY KEY,
+  applied_at TEXT NOT NULL
+);
+
 CREATE TABLE IF NOT EXISTS projects (
   id TEXT PRIMARY KEY,
   token TEXT NOT NULL UNIQUE,
@@ -26,11 +30,14 @@ CREATE TABLE IF NOT EXISTS sessions (
   isp TEXT,
   created_at TEXT NOT NULL,
   last_seen_at TEXT NOT NULL,
-  FOREIGN KEY (project_id) REFERENCES projects(id)
+  FOREIGN KEY (project_id) REFERENCES projects(id) ON DELETE CASCADE
 );
 
 CREATE INDEX IF NOT EXISTS idx_sessions_project_client
   ON sessions(project_id, client_fingerprint_id);
+
+CREATE INDEX IF NOT EXISTS idx_sessions_last_seen
+  ON sessions(last_seen_at);
 
 CREATE TABLE IF NOT EXISTS events (
   id TEXT PRIMARY KEY,
@@ -43,7 +50,7 @@ CREATE TABLE IF NOT EXISTS events (
   severity TEXT NOT NULL,
   metadata_json TEXT NOT NULL DEFAULT '{}',
   timestamp TEXT NOT NULL,
-  FOREIGN KEY (session_id) REFERENCES sessions(id)
+  FOREIGN KEY (session_id) REFERENCES sessions(id) ON DELETE CASCADE
 );
 
 CREATE INDEX IF NOT EXISTS idx_events_session_timestamp
@@ -63,6 +70,5 @@ CREATE TABLE IF NOT EXISTS vitals_aggregated (
   ttfb_p75 REAL,
   fcp_p75 REAL,
   sample_count INTEGER NOT NULL DEFAULT 0,
-  FOREIGN KEY (project_id) REFERENCES projects(id)
+  FOREIGN KEY (project_id) REFERENCES projects(id) ON DELETE CASCADE
 );
-`;

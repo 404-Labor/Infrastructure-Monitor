@@ -4,9 +4,9 @@ WatchDog ist ein Open-Source-Web-Monitoring-System von 404-Labor. Es besteht aus
 
 ## Pakete
 
-| Paket | Beschreibung |
-| --- | --- |
-| `@404-labor/watchdog` | Framework-agnostisches Browser-SDK |
+| Paket                        | Beschreibung                                   |
+| ---------------------------- | ---------------------------------------------- |
+| `@404-labor/watchdog`        | Framework-agnostisches Browser-SDK             |
 | `@404-labor/watchdog-server` | Fastify-Server mit SQLite-Storage und REST-API |
 
 Die vollstaendige Projektplanung liegt unter [`docs/project-planning.md`](docs/project-planning.md).

@@ -19,3 +19,13 @@ export async function sendPayload(config: ResolvedWatchDogConfig, payload: Watch
     throw new Error(`WatchDog collect failed with status ${response.status}`);
   }
 }
+
+export function sendPayloadBeacon(config: ResolvedWatchDogConfig, payload: WatchDogPayload): boolean {
+  if (!navigator.sendBeacon) {
+    return false;
+  }
+
+  const body = JSON.stringify(payload);
+  const blob = new Blob([body], { type: 'application/json' });
+  return navigator.sendBeacon(getCollectUrl(config.server), blob);
+}

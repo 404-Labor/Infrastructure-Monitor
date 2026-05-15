@@ -45,7 +45,7 @@ export class NetworkCollector implements Collector {
       try {
         const response = await this.originalFetch!(...args);
         const duration = performance.now() - start;
-        if (!response.ok || duration > this.config.networkTimeout) {
+        if (response.status >= this.config.httpErrorStatusThreshold) {
           this.captureNetworkEvent(request.method, response.url, duration, response.status, response.statusText);
         }
 
@@ -61,7 +61,8 @@ export class NetworkCollector implements Collector {
     this.originalOpen = XMLHttpRequest.prototype.open;
     this.originalSend = XMLHttpRequest.prototype.send;
     const batcher = this.batcher;
-    const timeout = this.config.networkTimeout;
+    const server = this.config.server;
+    const statusThreshold = this.config.httpErrorStatusThreshold;
     const originalOpen = this.originalOpen;
 
     XMLHttpRequest.prototype.open = function patchedOpen(
@@ -75,7 +76,8 @@ export class NetworkCollector implements Collector {
       this.__watchDogRequest = {
         method,
         url: String(url),
-        start: 0
+        start: 0,
+        skip: isWatchDogUrl(String(url), server)
       };
 
       return username !== undefined
@@ -86,11 +88,11 @@ export class NetworkCollector implements Collector {
     const originalSend = this.originalSend;
     XMLHttpRequest.prototype.send = function patchedSend(body?: Document | XMLHttpRequestBodyInit | null): void {
       const request = this.__watchDogRequest;
-      if (request) {
+      if (request && !request.skip) {
         request.start = performance.now();
         this.addEventListener('loadend', () => {
           const duration = performance.now() - request.start;
-          if (this.status >= 400 || duration > timeout) {
+          if (this.status >= statusThreshold) {
             batcher.add({
               type: 'network',
               category: 'xhr',
@@ -137,7 +139,15 @@ export class NetworkCollector implements Collector {
 }
 
 function shouldSkip(request: Request, server: string): boolean {
-  return request.headers.has(WATCHDOG_REPORT_HEADER) || request.url.startsWith(server);
+  return request.headers.has(WATCHDOG_REPORT_HEADER) || isWatchDogUrl(request.url, server);
+}
+
+function isWatchDogUrl(url: string, server: string): boolean {
+  try {
+    return new URL(url, window.location.href).href.startsWith(server);
+  } catch {
+    return url.startsWith(server);
+  }
 }
 
 declare global {
@@ -146,6 +156,7 @@ declare global {
       method: string;
       url: string;
       start: number;
+      skip: boolean;
     };
   }
 }

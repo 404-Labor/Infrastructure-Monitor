@@ -69,7 +69,7 @@ export class VitalsCollector implements Collector {
       return;
     }
 
-    const observer = new PerformanceObserver(list => {
+    const observer = new PerformanceObserver((list) => {
       for (const entry of list.getEntriesByType('resource') as PerformanceResourceTiming[]) {
         if (entry.duration < this.config.slowResourceThreshold) {
           continue;
@@ -100,7 +100,7 @@ export class VitalsCollector implements Collector {
     }
 
     try {
-      const observer = new PerformanceObserver(list => {
+      const observer = new PerformanceObserver((list) => {
         for (const entry of list.getEntries()) {
           this.batcher.add({
             type: 'performance',

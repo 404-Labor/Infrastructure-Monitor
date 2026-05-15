@@ -14,6 +14,7 @@ export interface WatchDogConfig {
   fingerprintRotation?: number;
   maxBatchSize?: number;
   networkTimeout?: number;
+  httpErrorStatusThreshold?: number;
   slowResourceThreshold?: number;
   debug?: boolean;
 }
@@ -30,6 +31,7 @@ export interface ResolvedWatchDogConfig {
   fingerprintRotation: number;
   maxBatchSize: number;
   networkTimeout: number;
+  httpErrorStatusThreshold: number;
   slowResourceThreshold: number;
   debug: boolean;
 }

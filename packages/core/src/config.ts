@@ -13,6 +13,7 @@ export const DEFAULT_CONFIG: Omit<ResolvedWatchDogConfig, 'projectId'> = {
   fingerprintRotation: 30,
   maxBatchSize: 50,
   networkTimeout: 10_000,
+  httpErrorStatusThreshold: 400,
   slowResourceThreshold: 1_000,
   debug: false
 };

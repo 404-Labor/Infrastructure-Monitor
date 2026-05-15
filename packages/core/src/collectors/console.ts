@@ -24,7 +24,7 @@ export class ConsoleCollector implements Collector {
           type: 'console',
           category: method,
           severity: method === 'error' ? 'error' : 'warning',
-          message: formatArgs(args),
+          message: serializeConsoleArgs(args),
           stackTrace: createStackTrace()
         });
       };
@@ -40,20 +40,37 @@ export class ConsoleCollector implements Collector {
   }
 }
 
-function formatArgs(args: unknown[]): string {
+export function serializeConsoleArgs(args: unknown[]): string {
   return args
-    .map(arg => {
+    .map((arg) => {
       if (typeof arg === 'string') {
         return arg;
       }
 
       try {
-        return JSON.stringify(arg);
+        return JSON.stringify(arg, createCircularReplacer());
       } catch {
         return '[Unserializable Object]';
       }
     })
     .join(' ');
+}
+
+function createCircularReplacer(): (key: string, value: unknown) => unknown {
+  const seen = new WeakSet<object>();
+
+  return (_key: string, value: unknown): unknown => {
+    if (typeof value !== 'object' || value === null) {
+      return value;
+    }
+
+    if (seen.has(value)) {
+      return '[Circular]';
+    }
+
+    seen.add(value);
+    return value;
+  };
 }
 
 function createStackTrace(): string | undefined {

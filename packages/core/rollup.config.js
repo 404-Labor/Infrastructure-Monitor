@@ -28,7 +28,8 @@ export default [
       typescript({
         tsconfig: './tsconfig.json',
         declaration: true,
-        declarationDir: 'dist/types'
+        declarationDir: 'dist/types',
+        exclude: ['**/*.test.ts', 'src/test/**']
       })
     ]
   },
@@ -48,6 +49,7 @@ export default [
       commonjs(),
       typescript({
         tsconfig: false,
+        exclude: ['**/*.test.ts', 'src/test/**'],
         compilerOptions: {
           target: 'ES2020',
           module: 'ESNext',

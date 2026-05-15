@@ -1,0 +1,6 @@
+dist
+server/dist
+packages/*/dist
+node_modules
+data
+pnpm-lock.yaml

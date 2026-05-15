@@ -8,7 +8,7 @@ interface StoredFingerprint {
 
 export async function getFingerprintId(rotationDays: number): Promise<string> {
   const stored = readStoredFingerprint();
-  if (stored && !isExpired(stored)) {
+  if (stored && stored.rotationDays === rotationDays && !isExpired(stored)) {
     return stored.id;
   }
 
@@ -21,6 +21,7 @@ async function createFingerprintId(rotationDays: number): Promise<string> {
   const entropy = [
     navigator.hardwareConcurrency ?? 'unknown-cpu',
     readDeviceMemory(),
+    navigator.userAgent,
     createCanvasFingerprint(),
     await createAudioFingerprint(),
     `${screen.width}x${screen.height}x${screen.colorDepth}`,
@@ -29,7 +30,7 @@ async function createFingerprintId(rotationDays: number): Promise<string> {
     rotationBucket(rotationDays)
   ].join('|');
 
-  return hash(entropy).then(value => value.slice(0, 16));
+  return hash(entropy).then((value) => value.slice(0, 16));
 }
 
 function readStoredFingerprint(): StoredFingerprint | null {
@@ -105,7 +106,7 @@ async function createAudioFingerprint(): Promise<string> {
     oscillator.start(0);
     const buffer = await context.startRendering();
     return Array.from(buffer.getChannelData(0).slice(0, 64))
-      .map(sample => sample.toFixed(5))
+      .map((sample) => sample.toFixed(5))
       .join(',');
   } catch {
     return 'audio-error';
@@ -119,7 +120,7 @@ async function hash(value: string): Promise<string> {
 
   const digest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(value));
   return Array.from(new Uint8Array(digest))
-    .map(byte => byte.toString(16).padStart(2, '0'))
+    .map((byte) => byte.toString(16).padStart(2, '0'))
     .join('');
 }
 

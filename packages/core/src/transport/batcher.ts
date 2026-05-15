@@ -1,15 +1,22 @@
 import { collectContext } from '../context';
-import type { ResolvedWatchDogConfig, WatchDogEvent, WatchDogPayload } from '../types';
+import type { ResolvedWatchDogConfig, WatchDogContext, WatchDogEvent, WatchDogPayload } from '../types';
 import { OfflineQueue } from './queue';
-import { sendPayload } from './sender';
+import { sendPayload, sendPayloadBeacon } from './sender';
 
 export class EventBatcher {
   private readonly buffer: WatchDogEvent[] = [];
   private readonly offlineQueue = new OfflineQueue();
+  private readonly contextPromise: Promise<WatchDogContext>;
+  private context: WatchDogContext | undefined;
   private timer: number | undefined;
   private flushing = false;
 
-  public constructor(private readonly config: ResolvedWatchDogConfig) {}
+  public constructor(private readonly config: ResolvedWatchDogConfig) {
+    this.contextPromise = collectContext(config.fingerprintRotation).then((context) => {
+      this.context = context;
+      return context;
+    });
+  }
 
   public start(): void {
     this.timer = window.setInterval(() => {
@@ -17,6 +24,8 @@ export class EventBatcher {
     }, this.config.sendInterval);
 
     window.addEventListener('online', this.handleOnline);
+    window.addEventListener('pagehide', this.handlePageHide);
+    window.addEventListener('beforeunload', this.handlePageHide);
     void this.flushOfflineQueue();
   }
 
@@ -27,10 +36,14 @@ export class EventBatcher {
     }
 
     window.removeEventListener('online', this.handleOnline);
+    window.removeEventListener('pagehide', this.handlePageHide);
+    window.removeEventListener('beforeunload', this.handlePageHide);
     void this.flush();
   }
 
-  public add(event: Omit<WatchDogEvent, 'id' | 'timestamp' | 'url'> & Partial<Pick<WatchDogEvent, 'timestamp' | 'url'>>): void {
+  public add(
+    event: Omit<WatchDogEvent, 'id' | 'timestamp' | 'url'> & Partial<Pick<WatchDogEvent, 'timestamp' | 'url'>>
+  ): void {
     this.buffer.push({
       id: createEventId(),
       timestamp: new Date().toISOString(),
@@ -85,13 +98,31 @@ export class EventBatcher {
     return {
       projectId: this.config.projectId,
       sentAt: new Date().toISOString(),
-      context: await collectContext(this.config.fingerprintRotation),
+      context: await this.contextPromise,
       events
     };
   }
 
   private readonly handleOnline = (): void => {
     void this.flushOfflineQueue();
+  };
+
+  private readonly handlePageHide = (): void => {
+    if (this.buffer.length === 0 || !this.context) {
+      return;
+    }
+
+    const events = this.buffer.splice(0);
+    const sent = sendPayloadBeacon(this.config, {
+      projectId: this.config.projectId,
+      sentAt: new Date().toISOString(),
+      context: this.context,
+      events
+    });
+
+    if (!sent) {
+      this.buffer.unshift(...events);
+    }
   };
 }
 

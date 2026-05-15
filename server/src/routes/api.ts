@@ -11,7 +11,9 @@ export function registerApiRoutes(app: FastifyInstance, database: Database.Datab
 
   app.get('/api/projects', async () => {
     const projects = database
-      .prepare('SELECT id, token, name, created_at as createdAt, settings_json as settingsJson FROM projects ORDER BY created_at DESC')
+      .prepare(
+        'SELECT id, token, name, created_at as createdAt, settings_json as settingsJson FROM projects ORDER BY created_at DESC'
+      )
       .all() as WatchDogProject[];
 
     return { projects };
@@ -45,9 +47,13 @@ export function registerApiRoutes(app: FastifyInstance, database: Database.Datab
   app.get('/api/overview', async () => {
     const sessions = database.prepare('SELECT COUNT(*) as count FROM sessions').get() as { count: number };
     const events = database.prepare('SELECT COUNT(*) as count FROM events').get() as { count: number };
-    const errors = database.prepare("SELECT COUNT(*) as count FROM events WHERE type = 'error'").get() as { count: number };
+    const errors = database.prepare("SELECT COUNT(*) as count FROM events WHERE type = 'error'").get() as {
+      count: number;
+    };
     const networkErrors = database
-      .prepare("SELECT COUNT(*) as count FROM events WHERE type = 'network' AND severity IN ('warning', 'error', 'critical')")
+      .prepare(
+        "SELECT COUNT(*) as count FROM events WHERE type = 'network' AND severity IN ('warning', 'error', 'critical')"
+      )
       .get() as { count: number };
 
     return {
@@ -108,7 +114,7 @@ export function registerApiRoutes(app: FastifyInstance, database: Database.Datab
 
     return {
       session,
-      events: events.map(event => ({
+      events: events.map((event) => ({
         ...event,
         metadata: JSON.parse(event.metadataJson)
       }))
@@ -142,7 +148,7 @@ export function registerApiRoutes(app: FastifyInstance, database: Database.Datab
       .all() as Array<{ category: string; metadataJson: string; timestamp: string }>;
 
     return {
-      vitals: vitals.map(vital => ({
+      vitals: vitals.map((vital) => ({
         category: vital.category,
         timestamp: vital.timestamp,
         metadata: JSON.parse(vital.metadataJson)
