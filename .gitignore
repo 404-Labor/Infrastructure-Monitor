@@ -1,5 +1,9 @@
 /dist
 /server/dist
+/packages/*/dist
 /node_modules
 /server/node_modules
+packages/*/node_modules
+/data
+/.turbo
 /.vscode

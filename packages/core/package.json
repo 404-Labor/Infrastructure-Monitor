@@ -1,0 +1,31 @@
+{
+  "name": "@404-labor/watchdog",
+  "version": "1.0.0",
+  "description": "Framework-agnostisches WatchDog Browser-SDK fuer Fehler-, Netzwerk- und Performance-Monitoring.",
+  "license": "MIT",
+  "author": "Steffen Bahrmann",
+  "type": "module",
+  "main": "dist/index.cjs",
+  "module": "dist/index.js",
+  "types": "dist/types/index.d.ts",
+  "unpkg": "dist/watchdog.min.js",
+  "files": [
+    "dist"
+  ],
+  "exports": {
+    ".": {
+      "types": "./dist/types/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
+    }
+  },
+  "scripts": {
+    "build": "rollup -c",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run --passWithNoTests",
+    "clean": "rm -rf dist"
+  },
+  "dependencies": {
+    "web-vitals": "^5.1.0"
+  }
+}

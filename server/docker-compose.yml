@@ -1,0 +1,16 @@
+services:
+  watchdog-server:
+    build:
+      context: ..
+      dockerfile: server/Dockerfile
+    ports:
+      - "4040:4040"
+    environment:
+      PORT: "4040"
+      WATCHDOG_DB_PATH: /data/watchdog.sqlite
+      WATCHDOG_DEFAULT_PROJECT_TOKEN: dev-project-token
+    volumes:
+      - watchdog-data:/data
+
+volumes:
+  watchdog-data:
