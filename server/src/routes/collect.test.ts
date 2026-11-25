@@ -56,7 +56,7 @@ describe('collect route', () => {
     expect(response.body).toBe('');
     expect(elapsed).toBeLessThan(50);
 
-    const sessions = await app.inject({ method: 'GET', url: '/api/sessions' });
+    const sessions = await app.inject({ method: 'GET', url: '/api/sessions', headers: adminHeaders() });
     expect(sessions.json().sessions[0].ipHash).toBe('203.0.113.42');
   });
 });
@@ -65,6 +65,10 @@ function testConfig(overrides: Partial<ServerConfig> = {}): ServerConfig {
   return {
     ...createDefaultConfig(),
     ...overrides,
+    admin: {
+      username: 'admin',
+      passwordHash: '2bb80d537b1da3e38bd30361aa855686bde0eacd7162fef6a25fe97bf527a25b'
+    },
     database: {
       type: 'sqlite',
       path: ':memory:'
@@ -76,6 +80,12 @@ function testConfig(overrides: Partial<ServerConfig> = {}): ServerConfig {
         name: 'Test'
       }
     ]
+  };
+}
+
+function adminHeaders() {
+  return {
+    authorization: `Basic ${Buffer.from('admin:secret').toString('base64')}`
   };
 }
 
