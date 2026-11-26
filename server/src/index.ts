@@ -37,7 +37,7 @@ export function buildServer(options: BuildServerOptions = {}) {
   app.get('/health', async () => ({ status: 'ok' }));
 
   registerCollectRoutes(app, database, config);
-  registerApiRoutes(app, database);
+  registerApiRoutes(app, database, config);
 
   app.addHook('onClose', async () => {
     clearInterval(storageTimer);

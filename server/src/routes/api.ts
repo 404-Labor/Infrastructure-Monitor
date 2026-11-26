@@ -1,15 +1,25 @@
+import { createHash, timingSafeEqual } from 'node:crypto';
 import type Database from 'better-sqlite3';
-import type { FastifyInstance } from 'fastify';
+import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
 import { nanoid } from 'nanoid';
+import type { ServerConfig } from '../config.js';
 import type { WatchDogEventRecord, WatchDogProject, WatchDogSession } from '../types.js';
 
-export function registerApiRoutes(app: FastifyInstance, database: Database.Database): void {
+export function registerApiRoutes(app: FastifyInstance, database: Database.Database, config: ServerConfig): void {
+  const adminOnly = async (request: FastifyRequest, reply: FastifyReply) => {
+    if (isAuthorized(request.headers.authorization, config)) {
+      return;
+    }
+
+    return reply.header('www-authenticate', 'Basic realm="WatchDog API"').status(401).send({ error: 'unauthorized' });
+  };
+
   app.get('/api/status', async () => ({
     status: 'online',
     service: 'watchdog-server'
   }));
 
-  app.get('/api/projects', async () => {
+  app.get('/api/projects', { preHandler: adminOnly }, async () => {
     const projects = database
       .prepare(
         'SELECT id, token, name, created_at as createdAt, settings_json as settingsJson FROM projects ORDER BY created_at DESC'
@@ -19,7 +29,7 @@ export function registerApiRoutes(app: FastifyInstance, database: Database.Datab
     return { projects };
   });
 
-  app.post('/api/projects', async (request, reply) => {
+  app.post('/api/projects', { preHandler: adminOnly }, async (request, reply) => {
     const body = request.body as { name?: string; settings?: Record<string, unknown> } | undefined;
     const name = body?.name?.trim();
     if (!name) {
@@ -44,7 +54,7 @@ export function registerApiRoutes(app: FastifyInstance, database: Database.Datab
     return reply.status(201).send({ project });
   });
 
-  app.get('/api/overview', async () => {
+  app.get('/api/overview', { preHandler: adminOnly }, async () => {
     const sessions = database.prepare('SELECT COUNT(*) as count FROM sessions').get() as { count: number };
     const events = database.prepare('SELECT COUNT(*) as count FROM events').get() as { count: number };
     const errors = database.prepare("SELECT COUNT(*) as count FROM events WHERE type = 'error'").get() as {
@@ -64,7 +74,7 @@ export function registerApiRoutes(app: FastifyInstance, database: Database.Datab
     };
   });
 
-  app.get('/api/sessions', async (request) => {
+  app.get('/api/sessions', { preHandler: adminOnly }, async (request) => {
     const query = request.query as { limit?: string; offset?: string };
     const limit = clampNumber(Number(query.limit ?? 50), 1, 200);
     const offset = Math.max(Number(query.offset ?? 0), 0);
@@ -84,7 +94,7 @@ export function registerApiRoutes(app: FastifyInstance, database: Database.Datab
     return { sessions, limit, offset };
   });
 
-  app.get('/api/sessions/:id', async (request, reply) => {
+  app.get('/api/sessions/:id', { preHandler: adminOnly }, async (request, reply) => {
     const { id } = request.params as { id: string };
     const session = database
       .prepare(
@@ -121,7 +131,7 @@ export function registerApiRoutes(app: FastifyInstance, database: Database.Datab
     };
   });
 
-  app.get('/api/errors', async () => {
+  app.get('/api/errors', { preHandler: adminOnly }, async () => {
     const errors = database
       .prepare(
         `SELECT message, stack_trace as stackTrace, COUNT(*) as count, MAX(timestamp) as lastSeenAt
@@ -136,7 +146,7 @@ export function registerApiRoutes(app: FastifyInstance, database: Database.Datab
     return { errors };
   });
 
-  app.get('/api/vitals', async () => {
+  app.get('/api/vitals', { preHandler: adminOnly }, async () => {
     const vitals = database
       .prepare(
         `SELECT category, metadata_json as metadataJson, timestamp
@@ -155,6 +165,54 @@ export function registerApiRoutes(app: FastifyInstance, database: Database.Datab
       }))
     };
   });
+}
+
+function isAuthorized(authorization: string | undefined, config: ServerConfig): boolean {
+  const configuredHash = config.admin.passwordHash;
+  if (!configuredHash) {
+    return false;
+  }
+
+  const credentials = parseBasicAuth(authorization);
+  if (!credentials || credentials.username !== config.admin.username) {
+    return false;
+  }
+
+  return safeEqual(hashPassword(credentials.password), configuredHash);
+}
+
+function parseBasicAuth(authorization: string | undefined): { username: string; password: string } | undefined {
+  const match = /^Basic\s+(.+)$/i.exec(authorization ?? '');
+  if (!match) {
+    return undefined;
+  }
+
+  let decoded: string;
+  try {
+    decoded = Buffer.from(match[1], 'base64').toString('utf8');
+  } catch {
+    return undefined;
+  }
+
+  const separator = decoded.indexOf(':');
+  if (separator < 0) {
+    return undefined;
+  }
+
+  return {
+    username: decoded.slice(0, separator),
+    password: decoded.slice(separator + 1)
+  };
+}
+
+function hashPassword(password: string): string {
+  return createHash('sha256').update(password).digest('hex');
+}
+
+function safeEqual(a: string, b: string): boolean {
+  const aBuffer = Buffer.from(a, 'utf8');
+  const bBuffer = Buffer.from(b, 'utf8');
+  return aBuffer.length === bBuffer.length && timingSafeEqual(aBuffer, bBuffer);
 }
 
 function clampNumber(value: number, min: number, max: number): number {

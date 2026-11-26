@@ -1,4 +1,5 @@
 import { afterEach, describe, expect, it } from 'vitest';
+import { createHash } from 'node:crypto';
 import { buildServer } from '../index.js';
 import { createDefaultConfig, type ServerConfig } from '../config.js';
 
@@ -56,7 +57,11 @@ describe('collect route', () => {
     expect(response.body).toBe('');
     expect(elapsed).toBeLessThan(50);
 
-    const sessions = await app.inject({ method: 'GET', url: '/api/sessions' });
+    const sessions = await app.inject({
+      method: 'GET',
+      url: '/api/sessions',
+      headers: authHeader()
+    });
     expect(sessions.json().sessions[0].ipHash).toBe('203.0.113.42');
   });
 });
@@ -75,8 +80,22 @@ function testConfig(overrides: Partial<ServerConfig> = {}): ServerConfig {
         token: 'test-token',
         name: 'Test'
       }
-    ]
+    ],
+    admin: {
+      username: 'admin',
+      passwordHash: hashPassword('secret')
+    }
   };
+}
+
+function authHeader() {
+  return {
+    authorization: `Basic ${Buffer.from('admin:secret').toString('base64')}`
+  };
+}
+
+function hashPassword(password: string): string {
+  return createHash('sha256').update(password).digest('hex');
 }
 
 function payload(projectId: string) {
