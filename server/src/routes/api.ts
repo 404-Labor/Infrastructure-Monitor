@@ -1,9 +1,33 @@
+import { createHash, timingSafeEqual } from 'node:crypto';
 import type Database from 'better-sqlite3';
-import type { FastifyInstance } from 'fastify';
+import type { FastifyInstance, FastifyRequest } from 'fastify';
 import { nanoid } from 'nanoid';
+import type { ServerConfig } from '../config.js';
 import type { WatchDogEventRecord, WatchDogProject, WatchDogSession } from '../types.js';
 
-export function registerApiRoutes(app: FastifyInstance, database: Database.Database): void {
+export function registerApiRoutes(app: FastifyInstance, database: Database.Database, config: ServerConfig): void {
+  app.addHook('preHandler', async (request, reply) => {
+    if (!request.url.startsWith('/api/')) {
+      return;
+    }
+    if (request.method === 'OPTIONS') {
+      return;
+    }
+
+    if (isAuthorizedApiRequest(request, config)) {
+      return;
+    }
+
+    if (!config.admin.passwordHash) {
+      return reply.status(503).send({ error: 'admin_not_configured' });
+    }
+
+    return reply
+      .header('WWW-Authenticate', 'Basic realm="WatchDog API", charset="UTF-8"')
+      .status(401)
+      .send({ error: 'unauthorized' });
+  });
+
   app.get('/api/status', async () => ({
     status: 'online',
     service: 'watchdog-server'
@@ -163,4 +187,52 @@ function clampNumber(value: number, min: number, max: number): number {
   }
 
   return Math.min(Math.max(value, min), max);
+}
+
+function isAuthorizedApiRequest(request: FastifyRequest, config: ServerConfig): boolean {
+  if (!config.admin.passwordHash) {
+    return false;
+  }
+
+  const credentials = parseBasicAuth(request.headers.authorization);
+  if (!credentials || credentials.username !== config.admin.username) {
+    return false;
+  }
+
+  const passwordHash = createHash('sha256').update(credentials.password).digest('hex');
+  return safeEqual(passwordHash, config.admin.passwordHash);
+}
+
+function parseBasicAuth(header: string | undefined): { username: string; password: string } | undefined {
+  if (!header) {
+    return undefined;
+  }
+
+  const [scheme, encoded] = header.split(' ', 2);
+  if (scheme.toLowerCase() !== 'basic' || !encoded) {
+    return undefined;
+  }
+
+  let decoded: string;
+  try {
+    decoded = Buffer.from(encoded, 'base64').toString('utf8');
+  } catch {
+    return undefined;
+  }
+
+  const separator = decoded.indexOf(':');
+  if (separator === -1) {
+    return undefined;
+  }
+
+  return {
+    username: decoded.slice(0, separator),
+    password: decoded.slice(separator + 1)
+  };
+}
+
+function safeEqual(a: string, b: string): boolean {
+  const left = Buffer.from(a, 'utf8');
+  const right = Buffer.from(b, 'utf8');
+  return left.length === right.length && timingSafeEqual(left, right);
 }

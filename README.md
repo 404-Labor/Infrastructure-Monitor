@@ -63,6 +63,11 @@ Standardwerte:
 - `GET /api/projects` - Projekte auflisten.
 - `POST /api/projects` - Projekt anlegen.
 
+Alle `/api/*`-Endpunkte enthalten administrative oder personenbezogene Daten und
+erfordern HTTP Basic Auth mit dem in der Server-Config hinterlegten
+Admin-Benutzer und Passwort-Hash. Ohne konfiguriertes Admin-Passwort verweigert
+der Server diese Endpunkte.
+
 ## Datenschutz
 
 WatchDog setzt keine Cookies. Die technische Client-ID wird lokal aus Browser-/Hardware-Merkmalen gehasht und standardmaessig alle 30 Tage rotiert. IP-Adressen werden serverseitig gehasht gespeichert.

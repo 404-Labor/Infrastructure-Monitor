@@ -1,6 +1,9 @@
+import { createHash } from 'node:crypto';
 import { afterEach, describe, expect, it } from 'vitest';
 import { buildServer } from '../index.js';
 import { createDefaultConfig, type ServerConfig } from '../config.js';
+
+const adminPassword = 'admin-password';
 
 describe('collect route', () => {
   const apps: Array<ReturnType<typeof buildServer>> = [];
@@ -56,8 +59,32 @@ describe('collect route', () => {
     expect(response.body).toBe('');
     expect(elapsed).toBeLessThan(50);
 
-    const sessions = await app.inject({ method: 'GET', url: '/api/sessions' });
+    const sessions = await app.inject({ method: 'GET', url: '/api/sessions', headers: adminHeaders() });
     expect(sessions.json().sessions[0].ipHash).toBe('203.0.113.42');
+  });
+
+  it('schuetzt Admin- und Daten-APIs per Basic-Auth', async () => {
+    const app = buildServer({ config: testConfig(), logger: false });
+    apps.push(app);
+
+    const unauthenticated = await app.inject({ method: 'GET', url: '/api/projects' });
+    expect(unauthenticated.statusCode).toBe(401);
+
+    const authenticated = await app.inject({ method: 'GET', url: '/api/projects', headers: adminHeaders() });
+    expect(authenticated.statusCode).toBe(200);
+    expect(authenticated.json().projects[0].token).toBe('test-token');
+  });
+
+  it('verweigert Admin- und Daten-APIs ohne konfiguriertes Admin-Passwort', async () => {
+    const app = buildServer({
+      config: testConfig({ admin: { username: 'admin', passwordHash: '' } }),
+      logger: false
+    });
+    apps.push(app);
+
+    const response = await app.inject({ method: 'GET', url: '/api/projects', headers: adminHeaders() });
+
+    expect(response.statusCode).toBe(503);
   });
 });
 
@@ -65,6 +92,10 @@ function testConfig(overrides: Partial<ServerConfig> = {}): ServerConfig {
   return {
     ...createDefaultConfig(),
     ...overrides,
+    admin: overrides.admin ?? {
+      username: 'admin',
+      passwordHash: createHash('sha256').update(adminPassword).digest('hex')
+    },
     database: {
       type: 'sqlite',
       path: ':memory:'
@@ -76,6 +107,12 @@ function testConfig(overrides: Partial<ServerConfig> = {}): ServerConfig {
         name: 'Test'
       }
     ]
+  };
+}
+
+function adminHeaders(): { authorization: string } {
+  return {
+    authorization: `Basic ${Buffer.from(`admin:${adminPassword}`, 'utf8').toString('base64')}`
   };
 }
 
